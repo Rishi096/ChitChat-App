@@ -65,7 +65,6 @@ if(newUser){
         });
     }
 };
-
 exports.login = async (req, res) => {
     try {
         const {username, password} = req.body;
