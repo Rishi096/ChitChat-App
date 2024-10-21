@@ -1,5 +1,6 @@
 const Conversation = require("../models/conversation");
 const Message = require("../models/message");
+const { getRecieverSocketId, io } = require("../socket/socket");
 
 exports.sendMessage = async(req,res) => {
     try {
@@ -11,6 +12,7 @@ exports.sendMessage = async(req,res) => {
             participants :{$all :[senderId, recieverId]},
 
         });
+        
         if(!conversation){
             conversation = await Conversation.create({
                 participants:[senderId,recieverId],
@@ -26,16 +28,22 @@ exports.sendMessage = async(req,res) => {
         if(newMessage){
             conversation.messages.push(newMessage._id);
         }
-
-        // SOCKET IO FUNCTIONALITY WILL GO HERE
-
-        
         // this will run one by one
         // await conversation.save();
         // await newMessage.save();
 
         // this will run parallel
         await Promise.all([conversation.save(),newMessage.save()]);
+
+
+        // SOCKET IO FUNCTIONALITY WILL GO HERE
+        const recieverSocketId = getRecieverSocketId(recieverId);
+        if(recieverSocketId){
+            //io.to(<socketid/>).emit() functionality is used to send events to specific client.
+            io.to(recieverSocketId).emit("newMessage",newMessage);
+        }
+
+        
 
         res.status(201).json(newMessage);
     } catch (error) {
@@ -54,7 +62,6 @@ exports.getMessage = async(req,res) => {
         const conversation = await Conversation.findOne({
             participants:{$all: [senderId,userToChatId]},
         }).populate("messages");
-   
         if (!conversation) {
             // Handle case where conversation is not found
             return res.status(404).json({

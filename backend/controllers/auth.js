@@ -1,11 +1,10 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-const { generateTokenAndSetCookie } = require("../utlis/generateTokens");
-
+const { generateTokenAndSetCookie } = require("../utlis/generateTokens.js");
 exports.signup = async (req, res) => {
     try {
-        const { fullName, username, password, confirmPassword, gender } = req.body;
-        if (!fullName || !username || !password || !confirmPassword || !gender) {
+        const { Fullname, username, password, confirmPassword, gender } = req.body;
+        if (!Fullname || !username || !password || !confirmPassword || !gender) {
             return res.status(400).json({
                 success: false,
                 message: "All fields are required",
@@ -33,31 +32,32 @@ exports.signup = async (req, res) => {
         const girlProfilePic = `https://avatar.iran.liara.run/public/girl?username=${username}`;
 
         const newUser = new User({
-            fullName,
+            Fullname,
             username,
             password: hashedPassword,
             gender,
             profilePic: gender === "male" ? boyProfilePic : girlProfilePic
         });
-if(newUser){
     // generate jwt token here
-      generateTokenAndSetCookie(newUser._id,res);
+    if(newUser){
+        generateTokenAndSetCookie(newUser._id,res);
         await newUser.save();
         res.status(201).json({
             _id: newUser._id,
-            fullName: newUser.fullName,
+            Fullname: newUser.Fullname,
             username: newUser.username,
             profilePic: newUser.profilePic,
             gender
         });
     }
     else{
-        res.status(500).json({
-            success: false,
-            error: "Invalid user data",
+        res.status(400).json({
+            success:false,
+            message: "Invalid user data"
         });
     }
-    } catch (error) {
+}
+    catch (error) {
         console.error("Error in signup controller", error);
         return res.status(500).json({
             success: false,
@@ -65,11 +65,12 @@ if(newUser){
         });
     }
 };
+
 exports.login = async (req, res) => {
     try {
         const {username, password} = req.body;
         const user = await User.findOne({username});
-        const isPasswordCorrect = bcrypt.compare(password,user?.password || "");
+        const isPasswordCorrect = await bcrypt.compare(password,user?.password || "");
 
         if(!user || !isPasswordCorrect){
             return res.status(400).json({
@@ -77,10 +78,11 @@ exports.login = async (req, res) => {
                 message:"Invalid username or password",
             });
         }
+        
         generateTokenAndSetCookie(user._id,res);
         res.status(200).json({
             _id: user._id,
-            fullName: user.fullName,
+            Fullname: user.Fullname,
             username: user.username,
             profilePic: user.profilePic,
         })
@@ -95,7 +97,6 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  
     try {
         res.cookie("jwt","",{maxAge:0});
         res.status(200).json({

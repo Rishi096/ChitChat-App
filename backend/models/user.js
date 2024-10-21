@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    fullName: {
+    Fullname: {
         type: String,
         required: true,
     },
@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6,
     },
+  
     gender: {
         type: String,
         enum: ["male", "female"],
@@ -26,4 +27,5 @@ const userSchema = new mongoose.Schema({
         default: "",
     },
 },{timestamps:true});
+
 module.exports = mongoose.model("User", userSchema);
