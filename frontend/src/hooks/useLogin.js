@@ -19,11 +19,15 @@ const useLogin = () => {
 
 			const data = await res.json();
            
-			if (data.error) {
-				throw new Error(data.error);
+			if (!res.ok) {  // Check for non-2xx response status
+				toast.error(data.message || "Login failed. Please try again.");
+				return;
 			}
-           localStorage.setItem("chat-user", JSON.stringify(data));
-           setAuthUser(data);
+
+			// Successful login
+			localStorage.setItem("chat-user", JSON.stringify(data));
+			setAuthUser(data);
+			toast.success("Login successful!");
        
 		} catch (error) {
 			toast.error(error.message);
